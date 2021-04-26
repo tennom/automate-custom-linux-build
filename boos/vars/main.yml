@@ -1,0 +1,18 @@
+---
+# prebuild packages to install 
+packages:
+  - squashfs-tools
+  - genisoimage
+
+chroot_mount_dirs:
+  - /proc
+  - /sys
+  - /dev/pts
+
+chroot_mount_commands:
+  /proc : "proc none /proc"
+  /sys: "sysfs none /sys"
+  /dev/pts: "devpts none /dev/pts"
+  # - proc none /proc
+  # - sysfs none /sys
+  # - devpts none /dev/pts

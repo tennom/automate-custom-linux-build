@@ -1,0 +1,15 @@
+# 
+# - 1. to mount some device files
+- name: chroot-1a | register chroot mount dirs.
+  command: mountpoint {{ item }}
+  failed_when: False
+  changed_when: False
+  register: mount_stats
+  with_items: "{{ chroot_mount_dirs }}"
+
+- name: chroot-1b | mount the dirs if not.
+  command: mount -t {{ chroot_mount_commands[item.item] }}
+  args:
+    warn: no # to prevent warning to use the ansible mount
+  when: item.rc != 0
+  with_items: "{{ mount_stats.results }}"

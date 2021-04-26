@@ -1,0 +1,15 @@
+---
+# the name of the base dir where all the input and output of the custom image locate.
+# change the dirname as you like and this dir will be created under your home dir
+base_dirname: "custom-image"
+base_dir_path: "/home/reactor"
+base_dir: "{{ base_dir_path }}/{{ base_dirname }}"
+# the name for mount point dir
+mount_dirname: "iso_mount"
+mount_dir: "{{ base_dir }}/{{ mount_dirname }}"
+# dirname for extract iso image content except for the file system.
+other_parts_dirname: "other_parts"
+other_parts_dir: "{{ base_dir }}/{{ other_parts_dirname }}"
+# the file system that you want to chroot, customize 
+file_system_dirname: "file_system"
+file_system_dir: "{{ base_dir }}/{{ file_system_dirname }}"

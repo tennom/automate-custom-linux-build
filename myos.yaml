@@ -1,0 +1,25 @@
+---
+- hosts: chroot_stage
+  gather_facts: yes
+  connection: local
+  roles:
+    - { role: boos }
+    # - { role: common, tags: ["common"] }
+    # - { role: mysql, tags: ["mysql"] }
+    # - { role: php-fpm, tags: ["php-fpm"] }
+    # - { role: certbot, tags: ["certbot"] }
+    # - { role: nginx, tags: ["nginx"] }
+
+
+# ---
+# - hosts: images-stage1
+#   gather_facts: no
+#   connection: local
+#   vars_files:
+#     - vars/include_packages.yml
+#     - vars/exclude_packages.yml
+#     - vars/setup.yml
+
+#   tasks:
+#     - include: tasks/setup.yml  
+# ...

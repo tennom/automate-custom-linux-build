@@ -1,0 +1,110 @@
+---
+# Tasks includes:
+# - 1. to install tools
+# - 2. to set up host system
+# - 3. to mount iso image
+# - 4. to copy the other parts of image
+# - 5. to extract file system
+# - 6. to share the networking from host
+# - 7. to device files from host
+- name: prebuild-1 | install tools to unpack file system and re_build iso.
+  apt:
+    name: "{{ packages }}"
+    state: present
+
+- name: prebuild-2a | create image build directory. 
+  file:
+    path: "{{ base_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: prebuild-2b | find iso files equal or greater than 1.5 gigabytes ending with .iso
+  find:
+    paths: "{{ base_dir }}"
+    patterns: 'ubuntu*.iso'
+    size: 1500m
+  register: iso_file
+
+- name: prebuild-2c | exit point on wrong iso image file setting.  
+  fail: 
+    msg: "You need to put one and only one iso image in {{ base_dir }}/"
+  when: "iso_file.matched != 1"
+
+- name: prebuild-3a | check if mnt is mount point
+  command: mountpoint -q {{ mount_dir }}
+  register: mnt_stat
+  failed_when: False
+  changed_when: False
+
+- name: prebuild-3bc | block for mounting iso image
+  block:
+  - name: prebuild-3b | create mount point dir if not a mount point. 
+    file:
+      path: "{{ mount_dir }}"
+      state: directory
+      mode: '0755'
+  
+  - name: prebuild-3c | mount iso image
+    # command: mount -o loop {{ iso_file.files[0].path }} {{ mount_dir }}
+    # iso9660
+    mount:
+      path: "{{ mount_dir }}"
+      src: "{{ iso_file.files[0].path }}"
+      fstype: iso9660
+      opts: loop
+      state: mounted
+    # args:
+    #   warn: no # to prevent warning to use the ansible mount
+    # become: true
+  when: mnt_stat.rc != 0
+  
+- name: prebuild-4a | create other parts dir to copy iso image content except for file system. 
+  file:
+    path: "{{ other_parts_dir }}"
+    state: directory
+
+- name: prebuild-4b | find content in the other parts dir.
+  find:
+    paths: "{{ other_parts_dir }}"
+    recurse: no
+    file_type: directory
+  register: other_parts
+
+# - name: prebuild | exit point on wrong iso image file setting.  
+#   fail: 
+#     msg: "You need to put one and only one iso image in {{ base_dir }}/"
+#   when: "extracted_dirs.matched != 0"
+
+- name: prebuild-4c | copy the other parts from mounted iso image.
+  command: rsync --exclude=/casper/filesystem.squashfs -a {{ mount_dir }}/ {{ other_parts_dir }}
+  become: true
+  when: "other_parts.matched == 0"
+
+- name: prebuild-5a | find state of the file system.
+  find:
+    paths: "{{ file_system_dir }}"
+    recurse: no
+    file_type: directory
+  register: my_file_system
+
+- name: prebuild-5b | file system preparation
+  block:
+
+  - name: prebuild-5b | unsquash the file system
+    command: unsquashfs -f -d {{ file_system_dir }} {{ mount_dir }}/casper/filesystem.squashfs
+    become: true
+  when: my_file_system.matched == 0
+
+- name: prebuld-6a | copy the networking resolv.conf from host to file system.
+  copy:
+    src: /etc/resolv.conf
+    dest: "{{ file_system_dir }}/etc/resolv.conf"
+  become: yes
+
+- name: prebuild-7b | bind mount the device files from the host to the new file system.
+  mount:
+    path: "{{ file_system_dir }}/dev"
+    src: /dev/
+    opts: bind
+    state: mounted
+    fstype: none

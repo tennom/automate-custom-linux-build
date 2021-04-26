@@ -1,0 +1,15 @@
+# tasks file for boos
+# ---
+- name: Getting into the prebuild tasks.
+  include: 0_prebuild.yaml
+
+- name: Getting into the chroot tasks.
+  include: 1_chroot_file_system.yaml ansible_connection=chroot
+  become: true
+  become_user: root
+# - include: 0_prebuild.yaml
+# - include: 1_chroot_file_system.yaml ansible_connection=chroot
+# - name: setup | before in chroot
+#   # shell: test `id -u` -eq 0
+#   debug: 
+#     msg: this is surely working.
